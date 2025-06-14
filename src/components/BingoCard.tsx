@@ -17,6 +17,79 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
   // Find the card in the store
   const card = bingoCards.find(c => c.id === cardId);
 
+  // Handle drag - useEffect is always called
+  useEffect(() => {
+    // Define handlers
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current || miniature) return;
+
+      // Calculate a new position
+      const x = e.clientX - dragOffset.current.x;
+      const y = e.clientY - dragOffset.current.y;
+
+      // Update card position
+      updateCardPosition(cardId, { x, y });
+    };
+
+    const handleMouseUp = () => {
+      isDragging.current = false;
+    };
+
+    // Touch events for mobile
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging.current || miniature || e.touches.length !== 1) return;
+
+      const touch = e.touches[0];
+
+      // Calculate a new position
+      const x = touch.clientX - dragOffset.current.x;
+      const y = touch.clientY - dragOffset.current.y;
+
+      // Update card position
+      updateCardPosition(cardId, { x, y });
+
+      // Prevent scrolling while dragging
+      e.preventDefault();
+    };
+
+    const handleTouchEnd = () => {
+      isDragging.current = false;
+    };
+
+    // Add event listeners (always add them, but handlers will check conditions)
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [cardId, miniature, updateCardPosition]);
+
+  // Handle click outside to close the expanded card - useEffect is always called
+  useEffect(() => {
+    // Define handler
+    const handleClickOutside = (e: MouseEvent) => {
+      // Only handle click outside if the card is expanded and not in miniature mode
+      if (!miniature && card?.isExpanded && cardRef.current && !cardRef.current.contains(e.target as Node)) {
+        toggleCardExpanded(cardId);
+      }
+    };
+
+    // Always add the event listener
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Always return the same cleanup function
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [cardId, card?.isExpanded, miniature, toggleCardExpanded]);
+
   // If the card doesn't exist, return null
   if (!card) return null;
 
@@ -78,60 +151,6 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
     e.preventDefault();
   };
 
-  // Handle drag - useEffect is always called
-  useEffect(() => {
-    // Define handlers
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || miniature) return;
-
-      // Calculate a new position
-      const x = e.clientX - dragOffset.current.x;
-      const y = e.clientY - dragOffset.current.y;
-
-      // Update card position
-      updateCardPosition(cardId, { x, y });
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-    };
-
-    // Touch events for mobile
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging.current || miniature || e.touches.length !== 1) return;
-
-      const touch = e.touches[0];
-
-      // Calculate a new position
-      const x = touch.clientX - dragOffset.current.x;
-      const y = touch.clientY - dragOffset.current.y;
-
-      // Update card position
-      updateCardPosition(cardId, { x, y });
-
-      // Prevent scrolling while dragging
-      e.preventDefault();
-    };
-
-    const handleTouchEnd = () => {
-      isDragging.current = false;
-    };
-
-    // Add event listeners (always add them, but handlers will check conditions)
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
-
-    // Cleanup
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [cardId, miniature, updateCardPosition]);
-
   // Handle touch start
   const handleTouchStart = (e: React.TouchEvent) => {
     if (miniature || !card.isExpanded || e.touches.length !== 1) return;
@@ -149,25 +168,6 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
       };
     }
   };
-
-  // Handle click outside to close the expanded card - useEffect is always called
-  useEffect(() => {
-    // Define handler
-    const handleClickOutside = (e: MouseEvent) => {
-      // Only handle click outside if the card is expanded and not in miniature mode
-      if (!miniature && card.isExpanded && cardRef.current && !cardRef.current.contains(e.target as Node)) {
-        toggleCardExpanded(cardId);
-      }
-    };
-
-    // Always add the event listener
-    document.addEventListener('mousedown', handleClickOutside);
-
-    // Always return the same cleanup function
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [cardId, card.isExpanded, miniature, toggleCardExpanded]);
 
   // Determine card size and position classes
   const cardClasses = miniature
