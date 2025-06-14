@@ -1,0 +1,18 @@
+このディレクトリに以下のアイコンファイルを追加してください：
+
+1. favicon.ico - サイズ: 16x16, 32x32, 48x48 (マルチサイズICOファイル)
+2. logo192.png - サイズ: 192x192 (PWAアイコン用)
+3. logo512.png - サイズ: 512x512 (PWAアイコン用)
+
+これらのファイルはPWA（Progressive Web App）機能に必要です。
+アイコンはビンゴゲームを表すシンプルなデザインにすることをお勧めします。
+
+Note in English:
+Please add the following icon files to this directory:
+
+1. favicon.ico - Sizes: 16x16, 32x32, 48x48 (multi-size ICO file)
+2. logo192.png - Size: 192x192 (for PWA icon)
+3. logo512.png - Size: 512x512 (for PWA icon)
+
+These files are required for PWA (Progressive Web App) functionality.
+It is recommended to use a simple design that represents a bingo game.
