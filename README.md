@@ -32,13 +32,13 @@
 
 ```bash
 # 依存関係のインストール
-npm install
+pnpm install
 
 # 開発サーバーの起動
-npm start
+pnpm start
 
 # ビルド
-npm run build
+pnpm run build
 ```
 
 ### デプロイ
@@ -49,7 +49,7 @@ npm run build
 
 ```bash
 # GitHub Pages へのデプロイ
-npm run deploy
+pnpm run deploy
 ```
 
 #### 自動デプロイ（GitHub Actions）

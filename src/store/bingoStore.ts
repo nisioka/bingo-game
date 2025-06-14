@@ -8,7 +8,7 @@ interface BingoState {
   currentNumber: number | null;
   isDrawing: boolean;
   maxNumber: number;
-  
+
   // Actions
   drawNumber: () => Promise<void>;
   resetGame: () => Promise<void>;
@@ -33,13 +33,13 @@ const generateRandomNumber = (max: number, drawnNumbers: number[]): number => {
   if (drawnNumbers.length >= max) {
     return -1;
   }
-  
+
   // Generate a random number between 1 and max
   let randomNum;
   do {
     randomNum = Math.floor(Math.random() * max) + 1;
   } while (drawnNumbers.includes(randomNum));
-  
+
   return randomNum;
 };
 
@@ -51,26 +51,26 @@ export const useBingoStore = create<BingoState>()(
       currentNumber: null,
       isDrawing: false,
       maxNumber: 75, // Default max number for bingo
-      
+
       drawNumber: async () => {
         const { drawnNumbers, maxNumber, isDrawing } = get();
-        
+
         // Prevent drawing if already in progress or all numbers drawn
         if (isDrawing || drawnNumbers.length >= maxNumber) {
           return;
         }
-        
+
         set({ isDrawing: true });
-        
+
         // Generate a new random number
         const newNumber = generateRandomNumber(maxNumber, drawnNumbers);
-        
+
         // If all numbers have been drawn
         if (newNumber === -1) {
           set({ isDrawing: false });
           return;
         }
-        
+
         // Update the state with the new number
         const updatedDrawnNumbers = [...drawnNumbers, newNumber];
         set({ 
@@ -78,7 +78,7 @@ export const useBingoStore = create<BingoState>()(
           drawnNumbers: updatedDrawnNumbers,
           isDrawing: false
         });
-        
+
         // Save to IndexedDB
         try {
           const db = await initDB();
@@ -92,7 +92,7 @@ export const useBingoStore = create<BingoState>()(
           console.error('Failed to save to IndexedDB:', error);
         }
       },
-      
+
       resetGame: async () => {
         // Reset the state
         set({ 
@@ -100,7 +100,7 @@ export const useBingoStore = create<BingoState>()(
           currentNumber: null,
           isDrawing: false
         });
-        
+
         // Clear IndexedDB
         try {
           const db = await initDB();
@@ -114,7 +114,7 @@ export const useBingoStore = create<BingoState>()(
           console.error('Failed to reset IndexedDB:', error);
         }
       },
-      
+
       setMaxNumber: (max: number) => {
         set({ maxNumber: max });
       }
@@ -124,11 +124,11 @@ export const useBingoStore = create<BingoState>()(
       getStorage: () => localStorage,
       onRehydrateStorage: () => {
         // When the store is rehydrated from localStorage, also check IndexedDB
-        return async (state) => {
+        return async (state: any) => {
           try {
             const db = await initDB();
             const gameState = await db.get('numbers', 'gameState');
-            
+
             if (gameState) {
               // Update the state with data from IndexedDB
               state?.setState({
