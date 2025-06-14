@@ -47,3 +47,15 @@ html {
   --background-color: #ebf8ff; /* blue-100 */
   --text-color: #2d3748; /* gray-800 */
 }
+
+/* Confetti animation */
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}

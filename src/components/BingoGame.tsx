@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { useBingoStore } from '../store/bingoStore';
 import NumberDisplay from './NumberDisplay';
 import NumberList from './NumberList';
+import CardSelector from './CardSelector';
+import CardSidebar from './CardSidebar';
+import CardDisplay from './CardDisplay';
+import BingoConfetti from './BingoConfetti';
 
 const BingoGame: React.FC = () => {
   const { 
@@ -26,7 +30,7 @@ const BingoGame: React.FC = () => {
 
     // Simple animation effect - show random numbers quickly before settling on the actual number
     const animationDuration = 1500; // 1.5 seconds
-    const interval = 100; // Change number every 100ms
+    const interval = 100; // Change number every 100 ms
     const startTime = Date.now();
 
     const animationInterval = setInterval(() => {
@@ -52,7 +56,7 @@ const BingoGame: React.FC = () => {
     }
   };
 
-  // Handle settings save
+  // Handle settings on save
   const handleSaveSettings = () => {
     setMaxNumber(tempMaxNumber);
     setShowSettings(false);
@@ -65,6 +69,11 @@ const BingoGame: React.FC = () => {
 
   return (
     <div className="bg-white rounded-xl p-3 shadow-lg">
+      {/* Card sidebar and display */}
+      <CardSidebar />
+      <CardDisplay />
+      <BingoConfetti />
+
       {/* Responsive layout container - flex-col on small screens, flex-row on medium and up */}
       <div className="flex flex-col md:flex-row md:gap-4">
         {/* Left section - full width on small screens, 1/4 width on medium and up */}
@@ -107,6 +116,10 @@ const BingoGame: React.FC = () => {
                   className="border rounded px-1 py-0.5 w-16 text-center"
                 />
               </div>
+
+              {/* Card selector */}
+              <CardSelector />
+
               <button 
                 onClick={handleSaveSettings}
                 className="btn-primary py-1 px-2 text-sm"
