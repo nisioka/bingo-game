@@ -7,9 +7,9 @@ interface NumberDisplayProps {
 
 const NumberDisplay: React.FC<NumberDisplayProps> = ({ number, animating }) => {
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-center my-1 md:my-3">
       <div 
-        className={`number-display ${animating ? 'animate-pop' : ''}`}
+        className={`number-display ${animating ? 'animate-pop' : ''} md:w-full md:max-w-[200px]`}
         aria-live="polite"
         aria-atomic="true"
       >

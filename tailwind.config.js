@@ -60,6 +60,9 @@ module.exports = {
           '100%': { transform: 'scale(1)' },
         },
       },
+      gridTemplateColumns: {
+        '15': 'repeat(15, minmax(0, 1fr))',
+      },
     },
   },
   plugins: [],

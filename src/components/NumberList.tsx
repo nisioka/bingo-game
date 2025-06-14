@@ -10,14 +10,14 @@ const NumberList: React.FC<NumberListProps> = ({ numbers, maxNumber }) => {
   const allNumbers = Array.from({ length: maxNumber }, (_, i) => i + 1);
 
   return (
-    <div>
-      <h3 className="text-xl font-bold mb-3 text-blue-600">出た番号</h3>
-      
-      <div className="number-list">
+    <div className="h-full">
+      <h3 className="text-base font-bold mb-1 text-blue-600 md:text-lg">出た番号</h3>
+
+      <div className="number-list md:grid-cols-12 lg:grid-cols-15">
         {allNumbers.map((num) => {
           const isDrawn = numbers.includes(num);
           const isLatest = numbers.length > 0 && numbers[numbers.length - 1] === num;
-          
+
           return (
             <div 
               key={num}
@@ -29,9 +29,9 @@ const NumberList: React.FC<NumberListProps> = ({ numbers, maxNumber }) => {
           );
         })}
       </div>
-      
+
       {numbers.length === 0 && (
-        <p className="text-center text-gray-500 mt-4">
+        <p className="text-center text-gray-500 mt-1 text-xs md:text-sm">
           まだ番号が出ていません。「番号を引く」ボタンを押してください。
         </p>
       )}

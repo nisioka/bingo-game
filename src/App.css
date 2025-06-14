@@ -4,8 +4,8 @@
 
 /* Button styles for children */
 .btn {
-  @apply py-4 px-8 rounded-full text-xl font-bold shadow-lg transition-all duration-200;
-  @apply focus:outline-none focus:ring-4 focus:ring-opacity-50;
+  @apply py-2 px-4 rounded-full text-lg font-bold shadow-md transition-all duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-opacity-50;
 }
 
 .btn-primary {
@@ -18,22 +18,22 @@
 
 /* Number display styles */
 .number-display {
-  @apply text-6xl font-bold text-blue-600 bg-white rounded-2xl p-8 shadow-xl;
+  @apply text-5xl font-bold text-blue-600 bg-white rounded-xl p-4 shadow-lg;
   @apply flex items-center justify-center;
-  min-height: 180px;
-  min-width: 180px;
+  min-height: 120px;
+  min-width: 120px;
 }
 
 /* Number list styles */
 .number-list {
-  @apply grid grid-cols-5 gap-2 mt-6;
+  @apply grid grid-cols-10 gap-1 mt-2;
 }
 
 .number-item {
-  @apply bg-white rounded-lg p-2 text-lg font-bold shadow;
+  @apply bg-white rounded-md p-1 text-base font-bold shadow-sm;
   @apply flex items-center justify-center;
-  height: 50px;
-  width: 50px;
+  height: 32px;
+  width: 32px;
 }
 
 .number-item.active {
