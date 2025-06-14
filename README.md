@@ -45,10 +45,18 @@ npm run build
 
 このアプリケーションは GitHub Pages にデプロイできます：
 
+#### 手動デプロイ
+
 ```bash
 # GitHub Pages へのデプロイ
 npm run deploy
 ```
+
+#### 自動デプロイ（GitHub Actions）
+
+このプロジェクトには GitHub Actions ワークフローが設定されています。`main` ブランチにプッシュすると、自動的にビルドされて GitHub Pages にデプロイされます。
+
+ワークフローの設定は `.github/workflows/deploy.yml` にあります。
 
 ## ライセンス
 
