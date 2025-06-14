@@ -1,0 +1,41 @@
+.App {
+  text-align: center;
+}
+
+/* Button styles for children */
+.btn {
+  @apply py-4 px-8 rounded-full text-xl font-bold shadow-lg transition-all duration-200;
+  @apply focus:outline-none focus:ring-4 focus:ring-opacity-50;
+}
+
+.btn-primary {
+  @apply bg-blue-500 text-white hover:bg-blue-600 focus:ring-blue-300;
+}
+
+.btn-secondary {
+  @apply bg-orange-400 text-white hover:bg-orange-500 focus:ring-orange-300;
+}
+
+/* Number display styles */
+.number-display {
+  @apply text-6xl font-bold text-blue-600 bg-white rounded-2xl p-8 shadow-xl;
+  @apply flex items-center justify-center;
+  min-height: 180px;
+  min-width: 180px;
+}
+
+/* Number list styles */
+.number-list {
+  @apply grid grid-cols-5 gap-2 mt-6;
+}
+
+.number-item {
+  @apply bg-white rounded-lg p-2 text-lg font-bold shadow;
+  @apply flex items-center justify-center;
+  height: 50px;
+  width: 50px;
+}
+
+.number-item.active {
+  @apply bg-orange-400 text-white;
+}
