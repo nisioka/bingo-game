@@ -7,7 +7,7 @@ import CardSelector from './CardSelector';
 import CardSidebar from './CardSidebar';
 import CardDisplay from './CardDisplay';
 import BingoConfetti from './BingoConfetti';
-import { playDrumRoll, primeAudio } from '../utils/sound';
+import { playDrumRoll, stopDrumRoll, primeAudio } from '../utils/sound';
 
 const BingoGame: React.FC = () => {
   const {
@@ -95,7 +95,12 @@ const BingoGame: React.FC = () => {
                 onClick={() => {
                   // Priming from the click satisfies browser autoplay rules.
                   primeAudio();
-                  setSoundEnabled(!soundEnabled);
+                  const next = !soundEnabled;
+                  // Silence any drum roll already in progress when muting.
+                  if (!next) {
+                    stopDrumRoll();
+                  }
+                  setSoundEnabled(next);
                 }}
                 className="btn-secondary py-1 px-2 text-sm"
                 aria-label={soundEnabled ? '音をオフにする' : '音をオンにする'}

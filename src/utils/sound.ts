@@ -37,11 +37,12 @@ const getAudioContext = (): AudioContext | null => {
 };
 
 // Create a short burst of filtered noise that sounds like a snare/drum hit.
+// Returns the source node so the caller can stop it early if needed.
 const playDrumHit = (
   ctx: AudioContext,
   time: number,
   gainValue: number
-): void => {
+): AudioScheduledSourceNode => {
   const duration = 0.08;
   const bufferSize = Math.floor(ctx.sampleRate * duration);
   const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -70,10 +71,16 @@ const playDrumHit = (
 
   source.start(time);
   source.stop(time + duration);
+
+  return source;
 };
 
 // A brighter, longer noise burst for the final reveal ("cymbal" + tone).
-const playCymbal = (ctx: AudioContext, time: number): void => {
+// Returns the created source nodes so they can be stopped early if needed.
+const playCymbal = (
+  ctx: AudioContext,
+  time: number
+): AudioScheduledSourceNode[] => {
   const duration = 0.6;
   const bufferSize = Math.floor(ctx.sampleRate * duration);
   const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -114,6 +121,8 @@ const playCymbal = (ctx: AudioContext, time: number): void => {
   oscGain.connect(ctx.destination);
   osc.start(time);
   osc.stop(time + 0.4);
+
+  return [source, osc];
 };
 
 // Play a drum roll that lasts for the given duration (in ms), building
@@ -130,28 +139,35 @@ export const playDrumRoll = (durationMs: number): void => {
   const startTime = ctx.currentTime;
   const durationSec = durationMs / 1000;
 
+  // Track every scheduled node so the roll can be stopped early (e.g. when
+  // the user mutes mid-draw).
+  const sources: AudioScheduledSourceNode[] = [];
+
   // Schedule a series of drum hits. The interval shrinks over time so
   // the roll accelerates towards the reveal.
   let t = 0;
-  const scheduled: number[] = [];
   while (t < durationSec) {
     const progress = t / durationSec;
     // Interval goes from ~55ms down to ~28ms as the roll builds up.
     const interval = 0.055 - 0.027 * progress;
     // Volume swells from quiet to loud.
     const gainValue = 0.12 + 0.28 * progress;
-    playDrumHit(ctx, startTime + t, gainValue);
-    scheduled.push(t);
+    sources.push(playDrumHit(ctx, startTime + t, gainValue));
     t += interval;
   }
 
   // Final reveal accent.
-  playCymbal(ctx, startTime + durationSec);
+  sources.push(...playCymbal(ctx, startTime + durationSec));
 
   activeRoll = {
     stop: () => {
-      /* Individual scheduled buffers can't be easily cancelled once
-         started, but they are short. This is mainly a bookkeeping hook. */
+      for (const node of sources) {
+        try {
+          node.stop();
+        } catch {
+          /* Node may already be stopped or not yet started. */
+        }
+      }
     },
   };
 };
