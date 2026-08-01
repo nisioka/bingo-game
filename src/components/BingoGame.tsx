@@ -2,20 +2,24 @@ import React, { useState } from 'react';
 import { useBingoStore } from '../store/bingoStore';
 import NumberDisplay from './NumberDisplay';
 import NumberList from './NumberList';
+import RecentNumbers from './RecentNumbers';
 import CardSelector from './CardSelector';
 import CardSidebar from './CardSidebar';
 import CardDisplay from './CardDisplay';
 import BingoConfetti from './BingoConfetti';
+import { playDrumRoll, stopDrumRoll, primeAudio } from '../utils/sound';
 
 const BingoGame: React.FC = () => {
-  const { 
-    currentNumber, 
-    drawnNumbers, 
-    isDrawing, 
+  const {
+    currentNumber,
+    drawnNumbers,
+    isDrawing,
     maxNumber,
-    drawNumber, 
+    soundEnabled,
+    drawNumber,
     resetGame,
-    setMaxNumber
+    setMaxNumber,
+    setSoundEnabled
   } = useBingoStore();
 
   const [animating, setAnimating] = useState(false);
@@ -32,6 +36,11 @@ const BingoGame: React.FC = () => {
     const animationDuration = 1500; // 1.5 seconds
     const interval = 100; // Change number every 100 ms
     const startTime = Date.now();
+
+    // Play a drum roll for the duration of the animation (if enabled).
+    if (soundEnabled) {
+      playDrumRoll(animationDuration);
+    }
 
     const animationInterval = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -82,14 +91,32 @@ const BingoGame: React.FC = () => {
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-xl font-bold text-blue-600 md:text-center md:w-full">ビンゴ番号抽選</h2>
             <div className="flex space-x-1 md:absolute md:top-4 md:right-4">
-              <button 
+              <button
+                onClick={() => {
+                  // Priming from the click satisfies browser autoplay rules.
+                  primeAudio();
+                  const next = !soundEnabled;
+                  // Silence any drum roll already in progress when muting.
+                  if (!next) {
+                    stopDrumRoll();
+                  }
+                  setSoundEnabled(next);
+                }}
+                className="btn-secondary py-1 px-2 text-sm"
+                aria-label={soundEnabled ? '音をオフにする' : '音をオンにする'}
+                aria-pressed={soundEnabled}
+                title={soundEnabled ? '音: オン' : '音: オフ'}
+              >
+                {soundEnabled ? '🔊' : '🔇'}
+              </button>
+              <button
                 onClick={() => setShowSettings(!showSettings)}
                 className="btn-secondary py-1 px-2 text-sm"
                 aria-label="設定"
               >
                 設定
               </button>
-              <button 
+              <button
                 onClick={handleResetGame}
                 className="btn-secondary py-1 px-2 text-sm"
                 disabled={drawnNumbers.length === 0}
@@ -168,6 +195,9 @@ const BingoGame: React.FC = () => {
 
         {/* Right section - full width on small screens, 3/4 width on medium and up */}
         <div className="md:w-3/4 md:pl-2 md:pt-1">
+          {/* Recently drawn numbers row (newest first) */}
+          <RecentNumbers numbers={drawnNumbers} />
+
           {/* Drawn numbers list */}
           <NumberList numbers={drawnNumbers} maxNumber={maxNumber} />
         </div>

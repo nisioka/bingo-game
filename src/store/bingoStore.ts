@@ -27,12 +27,14 @@ interface BingoState {
   maxNumber: number;
   bingoCards: BingoCard[];
   cardCount: number;
+  soundEnabled: boolean;
 
   // Actions
   drawNumber: () => Promise<void>;
   resetGame: () => Promise<void>;
   setMaxNumber: (max: number) => void;
   setCardCount: (count: number) => void;
+  setSoundEnabled: (enabled: boolean) => void;
   toggleCardMark: (cardId: string, row: number, col: number) => void;
   toggleCardExpanded: (cardId: string) => void;
   updateCardPosition: (cardId: string, position: { x: number; y: number }) => void;
@@ -200,6 +202,7 @@ export const useBingoStore = create<BingoState>()(
       maxNumber: 75, // Default max number for bingo
       bingoCards: [],
       cardCount: 0,
+      soundEnabled: true,
 
       drawNumber: async () => {
         const { drawnNumbers, maxNumber, isDrawing, bingoCards } = get();
@@ -279,6 +282,10 @@ export const useBingoStore = create<BingoState>()(
 
       setMaxNumber: (max: number) => {
         set({ maxNumber: max });
+      },
+
+      setSoundEnabled: (enabled: boolean) => {
+        set({ soundEnabled: enabled });
       },
 
       setCardCount: (count: number) => {

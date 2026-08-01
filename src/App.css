@@ -39,3 +39,19 @@
 .number-item.active {
   @apply bg-orange-400 text-white;
 }
+
+/* Recent numbers row styles */
+.recent-number-item {
+  @apply bg-blue-100 text-blue-700 rounded-lg font-bold shadow-sm;
+  @apply flex items-center justify-center;
+  height: 44px;
+  width: 44px;
+  font-size: 1.25rem;
+}
+
+.recent-number-latest {
+  @apply bg-orange-400 text-white shadow-md;
+  height: 60px;
+  width: 60px;
+  font-size: 1.75rem;
+}
