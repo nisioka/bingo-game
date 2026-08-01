@@ -17,11 +17,11 @@ const RecentNumbers: React.FC<RecentNumbersProps> = ({ numbers, count = 8 }) => 
   }
 
   return (
-    <div className="flex items-center gap-2 mb-2">
+    <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mb-2">
       <span className="text-xs md:text-sm font-bold text-blue-600 flex-shrink-0">
         直近:
       </span>
-      <div className="flex items-center gap-1 overflow-x-auto">
+      <div className="flex items-center flex-wrap gap-1">
         {recent.map((num, index) => (
           <div
             key={num}

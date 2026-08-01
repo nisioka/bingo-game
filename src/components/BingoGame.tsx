@@ -170,13 +170,16 @@ const BingoGame: React.FC = () => {
               className="btn btn-primary w-full"
               aria-label="番号を引く"
             >
-              {drawnNumbers.length >= maxNumber 
-                ? "すべての番号が出ました！" 
-                : isDrawing || animating 
-                  ? "抽選中..." 
+              {drawnNumbers.length >= maxNumber
+                ? "すべての番号が出ました！"
+                : isDrawing || animating
+                  ? "抽選中..."
                   : "番号を引く"}
             </button>
           </div>
+
+          {/* Recently drawn numbers row (newest first) */}
+          <RecentNumbers numbers={drawnNumbers} />
 
           {/* Progress bar */}
           <div className="mb-2">
@@ -195,9 +198,6 @@ const BingoGame: React.FC = () => {
 
         {/* Right section - full width on small screens, 3/4 width on medium and up */}
         <div className="md:w-3/4 md:pl-2 md:pt-1">
-          {/* Recently drawn numbers row (newest first) */}
-          <RecentNumbers numbers={drawnNumbers} />
-
           {/* Drawn numbers list */}
           <NumberList numbers={drawnNumbers} maxNumber={maxNumber} />
         </div>
