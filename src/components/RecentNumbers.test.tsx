@@ -3,33 +3,49 @@ import { render, screen } from '@testing-library/react';
 import RecentNumbers from './RecentNumbers';
 
 describe('RecentNumbers', () => {
-  it('shows an empty message when no numbers have been drawn', () => {
-    render(<RecentNumbers numbers={[]} />);
-    expect(screen.getByText('まだ番号が出ていません。')).toBeInTheDocument();
+  it('renders nothing when no numbers have been drawn', () => {
+    const { container } = render(<RecentNumbers numbers={[]} />);
+    expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders the newest number first with a "最新" label', () => {
-    render(<RecentNumbers numbers={[5, 12, 33]} />);
+  it('renders nothing when count is zero or negative', () => {
+    const { container: zero } = render(
+      <RecentNumbers numbers={[1, 2, 3]} count={0} />
+    );
+    expect(zero).toBeEmptyDOMElement();
 
-    // The latest drawn number (33) should be labelled "最新".
-    expect(screen.getByText('最新')).toBeInTheDocument();
-    expect(screen.getByText('1つ前')).toBeInTheDocument();
-
-    // The latest number tile should show 33.
-    const latest = screen.getByLabelText('最新の番号 33');
-    expect(latest).toHaveTextContent('33');
+    const { container: negative } = render(
+      <RecentNumbers numbers={[1, 2, 3]} count={-1} />
+    );
+    expect(negative).toBeEmptyDOMElement();
   });
 
-  it('labels the number before the latest as "1つ前"', () => {
+  it('renders each number as a list item for accessibility', () => {
     render(<RecentNumbers numbers={[5, 12, 33]} />);
-    const previous = screen.getByLabelText('1つ前の番号 12');
-    expect(previous).toHaveTextContent('12');
+    const items = screen.getAllByRole('listitem');
+    expect(items).toHaveLength(3);
+    expect(items[0]).toHaveTextContent('33');
+  });
+
+  it('renders the newest number first', () => {
+    const { container } = render(<RecentNumbers numbers={[5, 12, 33]} />);
+    const tiles = container.querySelectorAll('.recent-number-item');
+    // Newest (33) should be first, oldest shown (5) last.
+    expect(Array.from(tiles).map((t) => t.textContent)).toEqual([
+      '33',
+      '12',
+      '5',
+    ]);
+  });
+
+  it('marks the latest number with an aria-label', () => {
+    render(<RecentNumbers numbers={[5, 12, 33]} />);
+    expect(screen.getByLabelText('最新の番号 33')).toHaveTextContent('33');
+    expect(screen.getByLabelText('1つ前の番号 12')).toHaveTextContent('12');
   });
 
   it('limits the row to the requested count, keeping the most recent', () => {
     render(<RecentNumbers numbers={[1, 2, 3, 4, 5, 6, 7, 8]} count={3} />);
-
-    // Only the last 3 numbers should be shown.
     expect(screen.getByText('8')).toBeInTheDocument();
     expect(screen.getByText('7')).toBeInTheDocument();
     expect(screen.getByText('6')).toBeInTheDocument();
