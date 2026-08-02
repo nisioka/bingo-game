@@ -44,6 +44,7 @@
 .recent-number-item {
   @apply bg-blue-100 text-blue-700 rounded-md font-bold shadow-sm flex-shrink-0;
   @apply flex items-center justify-center;
+
   height: 32px;
   min-width: 32px;
   padding: 0 6px;

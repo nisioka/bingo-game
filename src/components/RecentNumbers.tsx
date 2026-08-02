@@ -10,7 +10,8 @@ interface RecentNumbersProps {
 // taking up much vertical space (important on landscape phones).
 const RecentNumbers: React.FC<RecentNumbersProps> = ({ numbers, count = 8 }) => {
   // Take the last `count` numbers and reverse so newest is on the left.
-  const recent = numbers.slice(-count).reverse();
+  // Guard against count <= 0 (slice(-0) === slice(0) would return everything).
+  const recent = count > 0 ? numbers.slice(-count).reverse() : [];
 
   if (recent.length === 0) {
     return null;
@@ -21,9 +22,9 @@ const RecentNumbers: React.FC<RecentNumbersProps> = ({ numbers, count = 8 }) => 
       <span className="text-xs md:text-sm font-bold text-blue-600 flex-shrink-0">
         直近:
       </span>
-      <div className="flex items-center flex-wrap gap-1">
+      <ul className="flex items-center flex-wrap gap-1 list-none m-0 p-0">
         {recent.map((num, index) => (
-          <div
+          <li
             key={num}
             className={`recent-number-item ${
               index === 0 ? 'recent-number-latest' : ''
@@ -33,9 +34,9 @@ const RecentNumbers: React.FC<RecentNumbersProps> = ({ numbers, count = 8 }) => 
             }
           >
             {num}
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 };

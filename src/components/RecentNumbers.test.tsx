@@ -8,6 +8,25 @@ describe('RecentNumbers', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('renders nothing when count is zero or negative', () => {
+    const { container: zero } = render(
+      <RecentNumbers numbers={[1, 2, 3]} count={0} />
+    );
+    expect(zero).toBeEmptyDOMElement();
+
+    const { container: negative } = render(
+      <RecentNumbers numbers={[1, 2, 3]} count={-1} />
+    );
+    expect(negative).toBeEmptyDOMElement();
+  });
+
+  it('renders each number as a list item for accessibility', () => {
+    render(<RecentNumbers numbers={[5, 12, 33]} />);
+    const items = screen.getAllByRole('listitem');
+    expect(items).toHaveLength(3);
+    expect(items[0]).toHaveTextContent('33');
+  });
+
   it('renders the newest number first', () => {
     const { container } = render(<RecentNumbers numbers={[5, 12, 33]} />);
     const tiles = container.querySelectorAll('.recent-number-item');
