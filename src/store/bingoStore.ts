@@ -352,10 +352,10 @@ export const useBingoStore = create<BingoState>()(
           bingoCards: newBingoCards
         });
 
-        // Save to IndexedDB
-        try {
-          const db = initDB();
-          db.then(db => {
+        // Save to IndexedDB. Chain and catch so rejections from both initDB()
+        // and db.put() are handled rather than becoming unhandled rejections.
+        void initDB()
+          .then(db =>
             db.put('numbers', {
               id: 'gameState',
               drawnNumbers: get().drawnNumbers,
@@ -363,11 +363,11 @@ export const useBingoStore = create<BingoState>()(
               maxNumber: get().maxNumber,
               bingoCards: newBingoCards,
               cardCount: safeCount
-            });
+            })
+          )
+          .catch(error => {
+            console.error('Failed to save card count to IndexedDB:', error);
           });
-        } catch (error) {
-          console.error('Failed to save card count to IndexedDB:', error);
-        }
       },
 
       toggleCardMark: (cardId: string, row: number, col: number) => {
@@ -403,10 +403,10 @@ export const useBingoStore = create<BingoState>()(
         // Update state
         set({ bingoCards: updatedCards });
 
-        // Save to IndexedDB
-        try {
-          const db = initDB();
-          db.then(db => {
+        // Save to IndexedDB. Chain and catch so rejections from both initDB()
+        // and db.put() are handled rather than becoming unhandled rejections.
+        void initDB()
+          .then(db =>
             db.put('numbers', {
               id: 'gameState',
               drawnNumbers: get().drawnNumbers,
@@ -414,11 +414,11 @@ export const useBingoStore = create<BingoState>()(
               maxNumber: get().maxNumber,
               bingoCards: updatedCards,
               cardCount: get().cardCount
-            });
+            })
+          )
+          .catch(error => {
+            console.error('Failed to save card mark to IndexedDB:', error);
           });
-        } catch (error) {
-          console.error('Failed to save card mark to IndexedDB:', error);
-        }
       },
 
       toggleCardExpanded: (cardId: string) => {
