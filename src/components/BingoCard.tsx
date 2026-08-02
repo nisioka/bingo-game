@@ -95,9 +95,10 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
 
   // Handle cell click
   const handleCellClick = (row: number, col: number) => {
-    // Don't mark cells in a miniature view
+    // In miniature view, let the click bubble up to the card container's
+    // onClick (handleCardClick) so the card expands with a single toggle.
+    // Toggling here as well would fire the toggle twice and reopen/close it.
     if (miniature) {
-      toggleCardExpanded(cardId);
       return;
     }
 

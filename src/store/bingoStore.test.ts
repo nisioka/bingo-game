@@ -174,4 +174,100 @@ describe('bingoStore', () => {
       expect(afterOff).toBe(before);
     });
   });
+
+  describe('toggleCardExpanded', () => {
+    it('toggles a single card open and closed', () => {
+      useBingoStore.getState().setCardCount(1);
+      const cardId = useBingoStore.getState().bingoCards[0].id;
+
+      expect(useBingoStore.getState().bingoCards[0].isExpanded).toBe(false);
+      useBingoStore.getState().toggleCardExpanded(cardId);
+      expect(useBingoStore.getState().bingoCards[0].isExpanded).toBe(true);
+      useBingoStore.getState().toggleCardExpanded(cardId);
+      expect(useBingoStore.getState().bingoCards[0].isExpanded).toBe(false);
+    });
+  });
+
+  describe('toggleCardAutoMark', () => {
+    it('defaults new cards to auto-mark off', () => {
+      useBingoStore.getState().setCardCount(1);
+      expect(useBingoStore.getState().bingoCards[0].autoMark).toBe(false);
+    });
+
+    it('toggles the setting on and off', () => {
+      useBingoStore.getState().setCardCount(1);
+      const cardId = useBingoStore.getState().bingoCards[0].id;
+
+      useBingoStore.getState().toggleCardAutoMark(cardId);
+      expect(useBingoStore.getState().bingoCards[0].autoMark).toBe(true);
+
+      useBingoStore.getState().toggleCardAutoMark(cardId);
+      expect(useBingoStore.getState().bingoCards[0].autoMark).toBe(false);
+    });
+
+    it('only affects the targeted card', () => {
+      useBingoStore.getState().setCardCount(2);
+      const [first, second] = useBingoStore.getState().bingoCards;
+
+      useBingoStore.getState().toggleCardAutoMark(first.id);
+
+      const cards = useBingoStore.getState().bingoCards;
+      expect(cards.find((c) => c.id === first.id)?.autoMark).toBe(true);
+      expect(cards.find((c) => c.id === second.id)?.autoMark).toBe(false);
+    });
+
+    it('retroactively marks numbers already drawn when enabled', () => {
+      useBingoStore.getState().setCardCount(1);
+      const card = useBingoStore.getState().bingoCards[0];
+
+      // Pick a real number off the card (skip the free center cell).
+      const target = card.cells[0][0].number;
+      useBingoStore.setState({ drawnNumbers: [target] });
+
+      useBingoStore.getState().toggleCardAutoMark(card.id);
+
+      expect(useBingoStore.getState().bingoCards[0].cells[0][0].marked).toBe(true);
+    });
+  });
+
+  describe('drawNumber with auto-mark', () => {
+    // Draw a specific number deterministically by pre-filling every other
+    // number so it's the only one left to draw.
+    const forceDraw = async (target: number, maxNumber: number) => {
+      const others: number[] = [];
+      for (let n = 1; n <= maxNumber; n++) {
+        if (n !== target) others.push(n);
+      }
+      useBingoStore.setState({ drawnNumbers: others });
+      await useBingoStore.getState().drawNumber();
+    };
+
+    it('auto-marks the drawn number on an enabled card', async () => {
+      useBingoStore.setState({ maxNumber: 75 });
+      useBingoStore.getState().setCardCount(1);
+
+      const card = useBingoStore.getState().bingoCards[0];
+      const target = card.cells[0][0].number; // a real number on the card
+
+      useBingoStore.getState().toggleCardAutoMark(card.id);
+      await forceDraw(target, 75);
+
+      expect(useBingoStore.getState().currentNumber).toBe(target);
+      expect(useBingoStore.getState().bingoCards[0].cells[0][0].marked).toBe(true);
+    });
+
+    it('does not auto-mark a card that has auto-mark disabled', async () => {
+      useBingoStore.setState({ maxNumber: 75 });
+      useBingoStore.getState().setCardCount(1);
+
+      const card = useBingoStore.getState().bingoCards[0];
+      const target = card.cells[0][0].number;
+
+      // Auto-mark left off for this card.
+      await forceDraw(target, 75);
+
+      expect(useBingoStore.getState().currentNumber).toBe(target);
+      expect(useBingoStore.getState().bingoCards[0].cells[0][0].marked).toBe(false);
+    });
+  });
 });

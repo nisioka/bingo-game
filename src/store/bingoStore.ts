@@ -15,6 +15,9 @@ interface BingoCard {
   color: string;
   position?: { x: number; y: number };
   isExpanded: boolean;
+  // When true, drawn numbers are marked automatically on this card without the
+  // user having to tap each cell. Configurable per card.
+  autoMark: boolean;
   hasReach: boolean;
   hasBingo: boolean;
 }
@@ -37,6 +40,7 @@ interface BingoState {
   setSoundEnabled: (enabled: boolean) => void;
   toggleCardMark: (cardId: string, row: number, col: number) => void;
   toggleCardExpanded: (cardId: string) => void;
+  toggleCardAutoMark: (cardId: string) => void;
   updateCardPosition: (cardId: string, position: { x: number; y: number }) => void;
 }
 
@@ -117,6 +121,7 @@ const generateBingoCard = (id: string, color: string): BingoCard => {
     cells: transposedCells,
     color,
     isExpanded: false,
+    autoMark: false,
     hasReach: false,
     hasBingo: false
   };
@@ -183,6 +188,33 @@ const checkReach = (card: BingoCard): boolean => {
 
 };
 
+// Mark a given number on a card (auto-daub). Returns the same card reference
+// when nothing changed, otherwise a new card with the cell marked and the
+// bingo/reach flags recomputed.
+const markNumberOnCard = (card: BingoCard, number: number): BingoCard => {
+  // The free space (number 0) is always marked; ignore non-positive numbers.
+  if (number <= 0) return card;
+
+  let changed = false;
+  const newCells = card.cells.map((row: BingoCardCell[]) =>
+    row.map((cell: BingoCardCell) => {
+      if (cell.number === number && !cell.marked) {
+        changed = true;
+        return { ...cell, marked: true };
+      }
+      return cell;
+    })
+  );
+
+  if (!changed) return card;
+
+  const updatedCard = { ...card, cells: newCells };
+  const hasBingo = checkBingo(updatedCard);
+  const hasReach = !hasBingo && checkReach(updatedCard);
+
+  return { ...updatedCard, hasBingo, hasReach };
+};
+
 // Card colors
 const CARD_COLORS = [
   'bg-red-100 border-red-500',
@@ -225,9 +257,16 @@ export const useBingoStore = create<BingoState>()(
 
         // Update the state with the new number
         const updatedDrawnNumbers = [...drawnNumbers, newNumber];
+
+        // Auto-mark the new number on any card that has auto-mark enabled
+        const updatedCards = bingoCards.map((card: BingoCard) =>
+          card.autoMark ? markNumberOnCard(card, newNumber) : card
+        );
+
         set({
           currentNumber: newNumber,
           drawnNumbers: updatedDrawnNumbers,
+          bingoCards: updatedCards,
           isDrawing: false
         });
 
@@ -239,7 +278,7 @@ export const useBingoStore = create<BingoState>()(
             drawnNumbers: updatedDrawnNumbers,
             currentNumber: newNumber,
             maxNumber,
-            bingoCards,
+            bingoCards: updatedCards,
             cardCount: get().cardCount
           });
         } catch (error) {
@@ -313,10 +352,10 @@ export const useBingoStore = create<BingoState>()(
           bingoCards: newBingoCards
         });
 
-        // Save to IndexedDB
-        try {
-          const db = initDB();
-          db.then(db => {
+        // Save to IndexedDB. Chain and catch so rejections from both initDB()
+        // and db.put() are handled rather than becoming unhandled rejections.
+        void initDB()
+          .then(db =>
             db.put('numbers', {
               id: 'gameState',
               drawnNumbers: get().drawnNumbers,
@@ -324,11 +363,11 @@ export const useBingoStore = create<BingoState>()(
               maxNumber: get().maxNumber,
               bingoCards: newBingoCards,
               cardCount: safeCount
-            });
+            })
+          )
+          .catch(error => {
+            console.error('Failed to save card count to IndexedDB:', error);
           });
-        } catch (error) {
-          console.error('Failed to save card count to IndexedDB:', error);
-        }
       },
 
       toggleCardMark: (cardId: string, row: number, col: number) => {
@@ -364,10 +403,10 @@ export const useBingoStore = create<BingoState>()(
         // Update state
         set({ bingoCards: updatedCards });
 
-        // Save to IndexedDB
-        try {
-          const db = initDB();
-          db.then(db => {
+        // Save to IndexedDB. Chain and catch so rejections from both initDB()
+        // and db.put() are handled rather than becoming unhandled rejections.
+        void initDB()
+          .then(db =>
             db.put('numbers', {
               id: 'gameState',
               drawnNumbers: get().drawnNumbers,
@@ -375,11 +414,11 @@ export const useBingoStore = create<BingoState>()(
               maxNumber: get().maxNumber,
               bingoCards: updatedCards,
               cardCount: get().cardCount
-            });
+            })
+          )
+          .catch(error => {
+            console.error('Failed to save card mark to IndexedDB:', error);
           });
-        } catch (error) {
-          console.error('Failed to save card mark to IndexedDB:', error);
-        }
       },
 
       toggleCardExpanded: (cardId: string) => {
@@ -402,6 +441,50 @@ export const useBingoStore = create<BingoState>()(
 
         // Update state
         set({ bingoCards: updatedCards });
+      },
+
+      toggleCardAutoMark: (cardId: string) => {
+        const { bingoCards, drawnNumbers } = get();
+
+        // Find the card and toggle its auto-mark setting
+        const updatedCards = bingoCards.map((card: BingoCard) => {
+          if (card.id !== cardId) return card;
+
+          const autoMark = !card.autoMark;
+
+          // Turning it off just flips the flag.
+          if (!autoMark) {
+            return { ...card, autoMark };
+          }
+
+          // Turning it on retroactively marks every number already drawn so the
+          // card catches up with the current game state.
+          let marked: BingoCard = { ...card, autoMark };
+          drawnNumbers.forEach((n: number) => {
+            marked = markNumberOnCard(marked, n);
+          });
+          return marked;
+        });
+
+        // Update state
+        set({ bingoCards: updatedCards });
+
+        // Save to IndexedDB. Chain and catch so rejections from both initDB()
+        // and db.put() are handled rather than becoming unhandled rejections.
+        void initDB()
+          .then(db =>
+            db.put('numbers', {
+              id: 'gameState',
+              drawnNumbers: get().drawnNumbers,
+              currentNumber: get().currentNumber,
+              maxNumber: get().maxNumber,
+              bingoCards: updatedCards,
+              cardCount: get().cardCount
+            })
+          )
+          .catch(error => {
+            console.error('Failed to save card auto-mark to IndexedDB:', error);
+          });
       },
 
       updateCardPosition: (cardId: string, position: { x: number; y: number }) => {
