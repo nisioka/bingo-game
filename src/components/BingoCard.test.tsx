@@ -27,15 +27,28 @@ describe('BingoCard (miniature)', () => {
     // A real number on the card (row 0 / col 0 is never the free space).
     const target = card.cells[0][0].number;
 
-    render(<BingoCard cardId={cardId} miniature />);
+    // Spy on the real toggle so we can assert it fires exactly once per click
+    // while still performing the actual state change.
+    const realToggle = useBingoStore.getState().toggleCardExpanded;
+    const toggleSpy = jest.fn(realToggle);
+    useBingoStore.setState({ toggleCardExpanded: toggleSpy });
 
-    expect(useBingoStore.getState().bingoCards[0].isExpanded).toBe(false);
+    try {
+      render(<BingoCard cardId={cardId} miniature />);
 
-    // Click an actual number cell. The click must bubble to the card container
-    // and toggle expansion once. Regression guard: previously the cell and the
-    // container both toggled, flipping it straight back to collapsed.
-    fireEvent.click(screen.getByText(String(target)));
+      expect(useBingoStore.getState().bingoCards[0].isExpanded).toBe(false);
 
-    expect(useBingoStore.getState().bingoCards[0].isExpanded).toBe(true);
+      // Click an actual number cell. The click must bubble to the card
+      // container and toggle expansion once. Regression guard: previously the
+      // cell and the container both toggled, firing twice and flipping the card
+      // straight back to collapsed.
+      fireEvent.click(screen.getByText(String(target)));
+
+      expect(toggleSpy).toHaveBeenCalledTimes(1);
+      expect(useBingoStore.getState().bingoCards[0].isExpanded).toBe(true);
+    } finally {
+      // Restore the real action so it can't leak into other tests.
+      useBingoStore.setState({ toggleCardExpanded: realToggle });
+    }
   });
 });
