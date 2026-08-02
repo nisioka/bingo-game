@@ -5,8 +5,8 @@ import BingoCard from './BingoCard';
 const CardDisplay: React.FC = () => {
   const { bingoCards } = useBingoStore();
 
-  // Show cards that are either manually expanded or set to auto-open
-  const expandedCards = bingoCards.filter(card => card.isExpanded || card.autoOpen);
+  // Filter for expanded cards
+  const expandedCards = bingoCards.filter(card => card.isExpanded);
 
   // If no expanded cards, don't render anything
   if (expandedCards.length === 0) return null;

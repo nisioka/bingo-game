@@ -75,9 +75,8 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
   useEffect(() => {
     // Define handler
     const handleClickOutside = (e: MouseEvent) => {
-      // Only close on outside click for manually-expanded cards. Auto-open
-      // cards are meant to stay visible, so they ignore outside clicks.
-      if (!miniature && !card?.autoOpen && card?.isExpanded && cardRef.current && !cardRef.current.contains(e.target as Node)) {
+      // Only handle click outside if the card is expanded and not in miniature mode
+      if (!miniature && card?.isExpanded && cardRef.current && !cardRef.current.contains(e.target as Node)) {
         toggleCardExpanded(cardId);
       }
     };
@@ -89,14 +88,10 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [cardId, card?.isExpanded, card?.autoOpen, miniature, toggleCardExpanded]);
+  }, [cardId, card?.isExpanded, miniature, toggleCardExpanded]);
 
   // If the card doesn't exist, return null
   if (!card) return null;
-
-  // A card is shown in its expanded form when the user manually opened it or
-  // when auto-open is enabled for that card.
-  const isOpen = card.isExpanded || card.autoOpen;
 
   // Handle cell click
   const handleCellClick = (row: number, col: number) => {
@@ -140,7 +135,7 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
 
   // Handle drag start
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (miniature || !isOpen) return;
+    if (miniature || !card.isExpanded) return;
 
     isDragging.current = true;
 
@@ -159,7 +154,7 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
 
   // Handle touch start
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (miniature || !isOpen || e.touches.length !== 1) return;
+    if (miniature || !card.isExpanded || e.touches.length !== 1) return;
 
     isDragging.current = true;
 
@@ -181,7 +176,7 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
     : `${card.color} border-4 rounded-lg shadow-lg absolute z-50 cursor-move`;
 
   // Position the expanded card
-  const cardStyle = !miniature && isOpen && card.position
+  const cardStyle = !miniature && card.isExpanded && card.position
     ? { top: `${card.position.y}px`, left: `${card.position.x}px` }
     : {};
 
@@ -191,7 +186,7 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
     : 'w-10 h-10 md:w-12 md:h-12 text-sm md:text-base flex items-center justify-center cursor-pointer';
 
   // Determine if the card should be shown
-  const showCard = miniature || isOpen;
+  const showCard = miniature || card.isExpanded;
 
   if (!showCard) return null;
 
@@ -205,26 +200,18 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
       onTouchStart={handleTouchStart}
     >
       {/* Card header with close button */}
-      {!miniature && isOpen && (
+      {!miniature && card.isExpanded && (
         <div className="flex justify-between items-center p-1 bg-white bg-opacity-80">
           <span className="text-xs font-bold">ビンゴカード</span>
-          {card.autoOpen ? (
-            // Auto-open cards can't be closed with × (they'd just reappear).
-            // Show a badge instead so the state is clear.
-            <span className="text-[10px] font-bold text-green-600" title="自動で開く設定がオンです">
-              自動
-            </span>
-          ) : (
-            <button
-              className="text-xs bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleCardExpanded(cardId);
-              }}
-            >
-              ×
-            </button>
-          )}
+          <button
+            className="text-xs bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleCardExpanded(cardId);
+            }}
+          >
+            ×
+          </button>
         </div>
       )}
 
@@ -271,7 +258,7 @@ const BingoCard: React.FC<BingoCardProps> = ({ cardId, miniature = false }) => {
       </div>
 
       {/* Bingo/Reach indicators */}
-      {!miniature && isOpen && (
+      {!miniature && card.isExpanded && (
         <div className="absolute top-0 left-0 right-0 flex justify-center">
           {card.hasBingo && (
             <div className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-b-lg animate-pulse">

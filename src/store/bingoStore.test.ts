@@ -188,43 +188,79 @@ describe('bingoStore', () => {
     });
   });
 
-  describe('toggleCardAutoOpen', () => {
-    it('defaults new cards to auto-open off', () => {
+  describe('toggleCardAutoMark', () => {
+    it('defaults new cards to auto-mark off', () => {
       useBingoStore.getState().setCardCount(1);
-      expect(useBingoStore.getState().bingoCards[0].autoOpen).toBe(false);
+      expect(useBingoStore.getState().bingoCards[0].autoMark).toBe(false);
     });
 
-    it('enabling auto-open marks the card expanded and gives it a position', () => {
+    it('toggles the setting on and off', () => {
       useBingoStore.getState().setCardCount(1);
       const cardId = useBingoStore.getState().bingoCards[0].id;
 
-      useBingoStore.getState().toggleCardAutoOpen(cardId);
+      useBingoStore.getState().toggleCardAutoMark(cardId);
+      expect(useBingoStore.getState().bingoCards[0].autoMark).toBe(true);
 
-      const card = useBingoStore.getState().bingoCards[0];
-      expect(card.autoOpen).toBe(true);
-      expect(card.isExpanded).toBe(true);
-      expect(card.position).toBeDefined();
-    });
-
-    it('disabling auto-open turns the setting off', () => {
-      useBingoStore.getState().setCardCount(1);
-      const cardId = useBingoStore.getState().bingoCards[0].id;
-
-      useBingoStore.getState().toggleCardAutoOpen(cardId);
-      useBingoStore.getState().toggleCardAutoOpen(cardId);
-
-      expect(useBingoStore.getState().bingoCards[0].autoOpen).toBe(false);
+      useBingoStore.getState().toggleCardAutoMark(cardId);
+      expect(useBingoStore.getState().bingoCards[0].autoMark).toBe(false);
     });
 
     it('only affects the targeted card', () => {
       useBingoStore.getState().setCardCount(2);
       const [first, second] = useBingoStore.getState().bingoCards;
 
-      useBingoStore.getState().toggleCardAutoOpen(first.id);
+      useBingoStore.getState().toggleCardAutoMark(first.id);
 
       const cards = useBingoStore.getState().bingoCards;
-      expect(cards.find((c) => c.id === first.id)?.autoOpen).toBe(true);
-      expect(cards.find((c) => c.id === second.id)?.autoOpen).toBe(false);
+      expect(cards.find((c) => c.id === first.id)?.autoMark).toBe(true);
+      expect(cards.find((c) => c.id === second.id)?.autoMark).toBe(false);
+    });
+
+    it('retroactively marks numbers already drawn when enabled', () => {
+      useBingoStore.getState().setCardCount(1);
+      const card = useBingoStore.getState().bingoCards[0];
+
+      // Pick a real number off the card (skip the free center cell).
+      const target = card.cells[0][0].number;
+      useBingoStore.setState({ drawnNumbers: [target] });
+
+      useBingoStore.getState().toggleCardAutoMark(card.id);
+
+      expect(useBingoStore.getState().bingoCards[0].cells[0][0].marked).toBe(true);
+    });
+  });
+
+  describe('drawNumber with auto-mark', () => {
+    it('auto-marks the drawn number on enabled cards only', async () => {
+      useBingoStore.setState({ maxNumber: 75 });
+      useBingoStore.getState().setCardCount(2);
+
+      const [first, second] = useBingoStore.getState().bingoCards;
+      useBingoStore.getState().toggleCardAutoMark(first.id);
+
+      await useBingoStore.getState().drawNumber();
+
+      const drawn = useBingoStore.getState().drawnNumbers[0];
+      const cards = useBingoStore.getState().bingoCards;
+
+      const findMarked = (id: string) => {
+        const card = cards.find((c) => c.id === id)!;
+        return card.cells.some((row) =>
+          row.some((cell) => cell.number === drawn && cell.marked)
+        );
+      };
+
+      // If the drawn number is on the auto-mark card it must be marked.
+      const firstCard = cards.find((c) => c.id === first.id)!;
+      const drawnOnFirst = firstCard.cells.some((row) =>
+        row.some((cell) => cell.number === drawn)
+      );
+      if (drawnOnFirst) {
+        expect(findMarked(first.id)).toBe(true);
+      }
+
+      // The card without auto-mark is never auto-marked from a draw.
+      expect(findMarked(second.id)).toBe(false);
     });
   });
 });
