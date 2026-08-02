@@ -231,36 +231,43 @@ describe('bingoStore', () => {
   });
 
   describe('drawNumber with auto-mark', () => {
-    it('auto-marks the drawn number on enabled cards only', async () => {
-      useBingoStore.setState({ maxNumber: 75 });
-      useBingoStore.getState().setCardCount(2);
-
-      const [first, second] = useBingoStore.getState().bingoCards;
-      useBingoStore.getState().toggleCardAutoMark(first.id);
-
-      await useBingoStore.getState().drawNumber();
-
-      const drawn = useBingoStore.getState().drawnNumbers[0];
-      const cards = useBingoStore.getState().bingoCards;
-
-      const findMarked = (id: string) => {
-        const card = cards.find((c) => c.id === id)!;
-        return card.cells.some((row) =>
-          row.some((cell) => cell.number === drawn && cell.marked)
-        );
-      };
-
-      // If the drawn number is on the auto-mark card it must be marked.
-      const firstCard = cards.find((c) => c.id === first.id)!;
-      const drawnOnFirst = firstCard.cells.some((row) =>
-        row.some((cell) => cell.number === drawn)
-      );
-      if (drawnOnFirst) {
-        expect(findMarked(first.id)).toBe(true);
+    // Draw a specific number deterministically by pre-filling every other
+    // number so it's the only one left to draw.
+    const forceDraw = async (target: number, maxNumber: number) => {
+      const others: number[] = [];
+      for (let n = 1; n <= maxNumber; n++) {
+        if (n !== target) others.push(n);
       }
+      useBingoStore.setState({ drawnNumbers: others });
+      await useBingoStore.getState().drawNumber();
+    };
 
-      // The card without auto-mark is never auto-marked from a draw.
-      expect(findMarked(second.id)).toBe(false);
+    it('auto-marks the drawn number on an enabled card', async () => {
+      useBingoStore.setState({ maxNumber: 75 });
+      useBingoStore.getState().setCardCount(1);
+
+      const card = useBingoStore.getState().bingoCards[0];
+      const target = card.cells[0][0].number; // a real number on the card
+
+      useBingoStore.getState().toggleCardAutoMark(card.id);
+      await forceDraw(target, 75);
+
+      expect(useBingoStore.getState().currentNumber).toBe(target);
+      expect(useBingoStore.getState().bingoCards[0].cells[0][0].marked).toBe(true);
+    });
+
+    it('does not auto-mark a card that has auto-mark disabled', async () => {
+      useBingoStore.setState({ maxNumber: 75 });
+      useBingoStore.getState().setCardCount(1);
+
+      const card = useBingoStore.getState().bingoCards[0];
+      const target = card.cells[0][0].number;
+
+      // Auto-mark left off for this card.
+      await forceDraw(target, 75);
+
+      expect(useBingoStore.getState().currentNumber).toBe(target);
+      expect(useBingoStore.getState().bingoCards[0].cells[0][0].marked).toBe(false);
     });
   });
 });

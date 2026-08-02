@@ -15,6 +15,7 @@ const CardSidebar: React.FC = () => {
           <BingoCard cardId={card.id} miniature={true} />
           {/* Per-card auto-mark toggle */}
           <button
+            type="button"
             onClick={() => toggleCardAutoMark(card.id)}
             className={`mt-0.5 text-[9px] leading-none px-1 py-0.5 rounded font-bold border
               ${card.autoMark
