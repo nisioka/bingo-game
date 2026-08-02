@@ -15,9 +15,21 @@ interface BingoCard {
   color: string;
   position?: { x: number; y: number };
   isExpanded: boolean;
+  // When true, the card is shown expanded automatically without the user
+  // having to click its miniature. Configurable per card.
+  autoOpen: boolean;
   hasReach: boolean;
   hasBingo: boolean;
 }
+
+// Compute a staggered default position so multiple auto-opened cards don't
+// all stack on the exact same spot. Cards remain draggable afterwards.
+const staggeredPosition = (index: number): { x: number; y: number } => {
+  const baseX = 24;
+  const baseY = 72;
+  const step = 44;
+  return { x: baseX + index * step, y: baseY + index * step };
+};
 
 // Define the type for our store state
 interface BingoState {
@@ -37,6 +49,7 @@ interface BingoState {
   setSoundEnabled: (enabled: boolean) => void;
   toggleCardMark: (cardId: string, row: number, col: number) => void;
   toggleCardExpanded: (cardId: string) => void;
+  toggleCardAutoOpen: (cardId: string) => void;
   updateCardPosition: (cardId: string, position: { x: number; y: number }) => void;
 }
 
@@ -117,6 +130,7 @@ const generateBingoCard = (id: string, color: string): BingoCard => {
     cells: transposedCells,
     color,
     isExpanded: false,
+    autoOpen: false,
     hasReach: false,
     hasBingo: false
   };
@@ -402,6 +416,47 @@ export const useBingoStore = create<BingoState>()(
 
         // Update state
         set({ bingoCards: updatedCards });
+      },
+
+      toggleCardAutoOpen: (cardId: string) => {
+        const { bingoCards } = get();
+
+        // Find the card and toggle its auto-open setting
+        const updatedCards = bingoCards.map((card: BingoCard, index: number) => {
+          if (card.id === cardId) {
+            const autoOpen = !card.autoOpen;
+            return {
+              ...card,
+              autoOpen,
+              // Enabling auto-open shows the card right away; disabling it
+              // leaves the current manual expanded state untouched.
+              isExpanded: autoOpen ? true : card.isExpanded,
+              // Give it a sensible starting position if it doesn't have one yet.
+              position: autoOpen && !card.position ? staggeredPosition(index) : card.position
+            };
+          }
+          return card;
+        });
+
+        // Update state
+        set({ bingoCards: updatedCards });
+
+        // Save to IndexedDB
+        try {
+          const db = initDB();
+          db.then(db => {
+            db.put('numbers', {
+              id: 'gameState',
+              drawnNumbers: get().drawnNumbers,
+              currentNumber: get().currentNumber,
+              maxNumber: get().maxNumber,
+              bingoCards: updatedCards,
+              cardCount: get().cardCount
+            });
+          });
+        } catch (error) {
+          console.error('Failed to save card auto-open to IndexedDB:', error);
+        }
       },
 
       updateCardPosition: (cardId: string, position: { x: number; y: number }) => {

@@ -174,4 +174,57 @@ describe('bingoStore', () => {
       expect(afterOff).toBe(before);
     });
   });
+
+  describe('toggleCardExpanded', () => {
+    it('toggles a single card open and closed', () => {
+      useBingoStore.getState().setCardCount(1);
+      const cardId = useBingoStore.getState().bingoCards[0].id;
+
+      expect(useBingoStore.getState().bingoCards[0].isExpanded).toBe(false);
+      useBingoStore.getState().toggleCardExpanded(cardId);
+      expect(useBingoStore.getState().bingoCards[0].isExpanded).toBe(true);
+      useBingoStore.getState().toggleCardExpanded(cardId);
+      expect(useBingoStore.getState().bingoCards[0].isExpanded).toBe(false);
+    });
+  });
+
+  describe('toggleCardAutoOpen', () => {
+    it('defaults new cards to auto-open off', () => {
+      useBingoStore.getState().setCardCount(1);
+      expect(useBingoStore.getState().bingoCards[0].autoOpen).toBe(false);
+    });
+
+    it('enabling auto-open marks the card expanded and gives it a position', () => {
+      useBingoStore.getState().setCardCount(1);
+      const cardId = useBingoStore.getState().bingoCards[0].id;
+
+      useBingoStore.getState().toggleCardAutoOpen(cardId);
+
+      const card = useBingoStore.getState().bingoCards[0];
+      expect(card.autoOpen).toBe(true);
+      expect(card.isExpanded).toBe(true);
+      expect(card.position).toBeDefined();
+    });
+
+    it('disabling auto-open turns the setting off', () => {
+      useBingoStore.getState().setCardCount(1);
+      const cardId = useBingoStore.getState().bingoCards[0].id;
+
+      useBingoStore.getState().toggleCardAutoOpen(cardId);
+      useBingoStore.getState().toggleCardAutoOpen(cardId);
+
+      expect(useBingoStore.getState().bingoCards[0].autoOpen).toBe(false);
+    });
+
+    it('only affects the targeted card', () => {
+      useBingoStore.getState().setCardCount(2);
+      const [first, second] = useBingoStore.getState().bingoCards;
+
+      useBingoStore.getState().toggleCardAutoOpen(first.id);
+
+      const cards = useBingoStore.getState().bingoCards;
+      expect(cards.find((c) => c.id === first.id)?.autoOpen).toBe(true);
+      expect(cards.find((c) => c.id === second.id)?.autoOpen).toBe(false);
+    });
+  });
 });
